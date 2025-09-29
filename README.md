@@ -4,7 +4,7 @@ It manages financing leads, including creation, reading, searching, reviewing, a
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 - **Domain**:  
   Contains core business entities, enums, and domain events.  
@@ -50,6 +50,24 @@ Update `appsettings.json`:
 
 ## Run EF Core migrations:
 - dotnet ef database update
+
+---
+
+## Application and Integration Justifications
+A. **CQRS & Mapping**
+
+  Projection Strategy: 
+  
+   - Read queries (GetFinancingLeadsQuery) use AsNoTracking() in the repository implementation to enhance read performance and reduce memory usage.
+  
+B. **Firebase Notification Integration**
+
+  - Normalization Rule (FCM Topic): FCM topics do not allow the + symbol. The implemented normalization rule is:
+Replace the leading + with plus- and convert to lowercase.
+
+     Example: +15551234567 becomes plus-15551234567.
+
+  - Notification Integration Trade-off: The INotificationClient is injected directly into the ReviewFinancingLeadHandler instead of using a complex domain event dispatcher mechanism.
 
 ---
 
