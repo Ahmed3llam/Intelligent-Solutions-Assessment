@@ -53,6 +53,37 @@ Update `appsettings.json`:
 
 ---
 
+## FinancingLead Entity Configuration
+
+The `FinancingLead` entity is configured using `IEntityTypeConfiguration<FinancingLead>` inside `Infrastructure/Mapping/FinancingLeadConfiguration.cs`.
+
+### Property Configuration
+- **Id** → Primary key (GUID).
+- **RowVersion** → Concurrency token (`IsRowVersion`).
+- **Name** → Required, `nvarchar(100)`.
+- **Email** → Required, `nvarchar(254)`.
+- **PhoneE164** → Required, `nvarchar(16)`, stored in E.164 format for consistency.
+- **TypeOfActivity** → Required, `nvarchar(100)`.
+- **CommercialRegisterType** → Required, `nvarchar(50)`.
+- **AnnualIncome** → Decimal with precision `(18,2)`.
+- **Notes** → Optional, up to 500 characters.
+- **CreatedAt** → Required `datetime`, stored in **UTC**.
+- **ReviewedAt** → Nullable `datetime`, stored in **UTC**.
+- **Status** → Enum converted to string, up to 20 characters.
+- **ReviewReason** → Optional, up to 250 characters.
+- **Events** → Domain events collection, ignored by EF (not persisted).
+
+### Indexes
+- **CreatedAt DESC** → `IX_Lead_CreatedAt_Desc` for fast sorting by latest leads.  
+- **PhoneE164** → Unique index to ensure one lead per phone number.  
+- **Email** → Unique index to ensure one lead per email.  
+- **Composite (Name, Email, PhoneE164)** → `IX_Lead_ContactComposite` for efficient multi-field searching.  
+
+### UTC Handling Strategy
+- All `DateTime` values (`CreatedAt`, `ReviewedAt`) are stored in **UTC** to avoid timezone inconsistencies.  
+
+---
+
 ## Application and Integration Justifications
 A. **CQRS & Mapping**
 
