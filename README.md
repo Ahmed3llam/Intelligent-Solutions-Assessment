@@ -1,1 +1,165 @@
-# Assessment
+## Financing Leads Management API
+This project is a layered **.NET Web API**.  
+It manages financing leads, including creation, reading, searching, reviewing, and notifications (via Firebase Cloud Messaging).
+
+---
+
+## 🏗️ Project Structure
+
+- **Domain**:  
+  Contains core business entities, enums, and domain events.  
+  Example: `FinancingLead`, `LeadReviewStatus`, `LeadReviewedDomainEvent`.
+
+- **Application**:  
+  Contains DTOs, commands, queries, and interfaces (Repositories, Notifications).  
+  Uses **MediatR** for CQRS.
+
+- **Infrastructure**:  
+  Implements repository interfaces (EF Core), notifications (Firebase), and persistence (SQL Server).
+
+- **API**:  
+  Exposes REST endpoints for managing financing leads.
+
+---
+
+## Configuration
+
+Update `appsettings.json`: 
+- update ConnectionStrings (db name - user id - password) 
+- update NotificationSettings (project ID - path of file that will be downloaded when getting the private key)
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.;Database=Assessment;User Id=---;Password=--;TrustServerCertificate=true"
+  },
+  "NotificationSettings": {
+    "ProjectId": "",
+    "ServiceAccountPath": ""
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+```
+
+---
+
+## Run EF Core migrations:
+- dotnet ef database update
+
+---
+
+## Endpoints
+- **Base URL**: http://localhost:5000/api/financingleads
+- **Create a Lead**: POST /api/financingleads
+  
+     -- **Request**:
+    ```json
+          {
+              "name": "Ahmed",
+              "email": "ahmed@any.com",
+              "phoneE164": "+201234567890",
+              "typeOfActivity": "Retail",
+              "commercialRegisterType": "LLC",
+              "preferredContactMethod": "Email",
+              "annualIncome": 1000000.54,
+              "notes": "Needs financing for expansion."
+            }
+   ```
+    -- **Response (201 Created):**
+
+  ```json
+    {
+      "id": "c95a74fa-14a3-4c5d-8b7e-6a12ef6a8fd1"
+    }
+  ```
+- **Get Leads (with filtering & paging)**: GET /api/financingleads
+ 
+    -- **Response**:
+    ```json
+      {
+        "items": [
+          {
+            "id": "c95a74fa-14a3-4c5d-8b7e-6a12ef6a8fd1",
+            "name": "Ahmed",
+            "email": "ahmed@any.com",
+            "phoneE164": "+201234567890",
+            "status": "Pending",
+            "createdAt": "2025-09-29T07:15:00Z",
+            "typeOfActivity": "Retail",
+            "commercialRegisterType": "LLC",
+            "preferredContactMethod": "Email",
+            "annualIncome": 1000000.54,
+            "notes": "Needs financing for expansion."
+          }
+        ],
+        "totalPages": 1,
+      }
+    ```
+
+    -- **Filters supported**:
+  
+      - search + searchWith (Name, Email, Phone)
+      - phoneStartsWith
+      - from / to (CreatedAt range)
+      - status (Pending, Accepted, Rejected)
+      - Sorting: sortBy=name|status|createdAt&sortDir=asc|desc
+
+- **Review a Lead**: POST /api/financingleads/review
+
+    -- **Request**:
+    ```json
+      {
+        "Id": "c95a74fa-14a3-4c5d-8b7e-6a12ef6a8fd1",
+        "status": "Accepted",
+        "reason": "Documents validated."
+      }
+   ```
+    -- **Response (201 Created):**
+
+  ```json
+    {
+      "decision": "Accepted",
+      "reviewReason": "validated.",
+    }
+  ```
+
+----
+
+## Notifications (Firebase)
+
+When a lead is reviewed with status Accepted, a Firebase Push Notification is dispatched.
+
+- Payload:
+```json
+  {
+    "to": "/topics/leads",
+    "notification": {
+      "title": "Lead Accepted",
+      "body": "Your financing lead was accepted."
+    }
+  }
+```
+
+---
+
+## Running Locally
+
+- dotnet restore
+- dotnet build
+- dotnet run --project API
+
+---
+
+## Notes
+
+- All timestamps are stored and returned in UTC.
+- Domain events are published when important business actions occur (e.g., Lead Reviewed).
+- Concurrency is handled with EF Core RowVersion.
+
+---
+## Thanks
